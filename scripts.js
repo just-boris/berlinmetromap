@@ -25,9 +25,9 @@ class ImageView {
             res = Math.min(a, res);
             return res;
         };
-        const pos = this.el.getBoundingClientRect();
-        const left = transformOffset((event.pageX - pos.top) / this.fullMap.offsetWidth * 100);
-        const top = transformOffset((event.pageY - pos.left) / this.fullMap.offsetHeight * 100);
+        const pos = this.fullMap.getBoundingClientRect();
+        const left = transformOffset((event.x - pos.left) / pos.width * 100);
+        const top = transformOffset((event.y - pos.top) / pos.height * 100);
         this.zoomMap.style.objectPosition = `${left}% ${top}%`
     }
 
