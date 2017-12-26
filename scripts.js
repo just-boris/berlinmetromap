@@ -17,7 +17,7 @@ class ImageView {
     }
 
     setZoomPosition(event) {
-        const n = 4;
+        const n = 10;
         const a = 100;
         const transformOffset = x => {
             let res = a / (a - 2 * n) * x - n;
@@ -32,7 +32,7 @@ class ImageView {
     }
 
     setActiveImage(name) {
-        const src = `images/S_und_U-${name}.png`;
+        const src = `/images/S_und_U-${name}.png`;
         this.fullMap.src = src;
         this.zoomMap.src = src;
     }
