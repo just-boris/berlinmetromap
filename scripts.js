@@ -1,63 +1,81 @@
 function addElement(tag, className, parent) {
-    const element = document.createElement(tag);
-    element.className = className;
-    parent.appendChild(element);
-    return element;
+  const element = document.createElement(tag);
+  element.className = className;
+  parent.appendChild(element);
+  return element;
+}
+
+function imageName(name) {
+  return `/images/S_und_U-${name}.png`;
 }
 
 class ImageView {
-    constructor() {
-        this.el = document.querySelector(".map");
-        this.fullMap = addElement("img", "map-full", this.el);
-        this.zoomMap = addElement("img", "map-zoom", this.el);
-        this.zoomMap.style.display = "none";
-        this.el.addEventListener("mouseenter", event => this.zoomMap.style.display = "");
-        this.el.addEventListener("mousemove", event => this.setZoomPosition(event));
-        this.el.addEventListener("mouseleave", event => this.zoomMap.style.display = "none");
-    }
+  constructor() {
+    this.el = document.querySelector(".map");
+    this.fullMap = addElement("img", "map-full", this.el);
+    this.zoomMap = addElement("img", "map-zoom", this.el);
+    this.zoomMap.style.display = "none";
+    this.el.addEventListener("mouseenter", event => (this.zoomMap.style.display = ""));
+    this.el.addEventListener("mousemove", event => this.setZoomPosition(event));
+    this.el.addEventListener("mouseleave", event => (this.zoomMap.style.display = "none"));
+  }
 
-    setZoomPosition(event) {
-        const n = 10;
-        const a = 100;
-        const transformOffset = x => {
-            let res = a / (a - 2 * n) * x - n;
-            res = Math.max(0, res);
-            res = Math.min(a, res);
-            return res;
-        };
-        const pos = this.fullMap.getBoundingClientRect();
-        const left = transformOffset((event.x - pos.left) / pos.width * 100);
-        const top = transformOffset((event.y - pos.top) / pos.height * 100);
-        this.zoomMap.style.objectPosition = `${left}% ${top}%`
-    }
+  setZoomPosition(event) {
+    const n = 10;
+    const a = 100;
+    const transformOffset = x => {
+      let res = a / (a - 2 * n) * x - n;
+      res = Math.max(0, res);
+      res = Math.min(a, res);
+      return res;
+    };
+    const pos = this.fullMap.getBoundingClientRect();
+    const left = transformOffset((event.x - pos.left) / pos.width * 100);
+    const top = transformOffset((event.y - pos.top) / pos.height * 100);
+    this.zoomMap.style.objectPosition = `${left}% ${top}%`;
+  }
 
-    setActiveImage(name) {
-        const src = `/images/S_und_U-${name}.png`;
-        this.fullMap.src = src;
-        this.zoomMap.src = src;
-    }
+  setActiveImage(name) {
+    const src = imageName(name);
+    this.fullMap.src = src;
+    this.zoomMap.src = src;
+  }
 }
 
 let currentEntry;
-const view = new ImageView()
+const view = new ImageView();
 function setActive(entry) {
-    if (currentEntry !== entry) {
-        if (currentEntry) {
-            currentEntry.classList.remove("entry-active");
-        }
-        currentEntry = entry;
-        entry.classList.add("entry-active");
-        view.setActiveImage(entry.dataset.name);
+  if (currentEntry !== entry) {
+    if (currentEntry) {
+      currentEntry.classList.remove("entry-active");
     }
+    currentEntry = entry;
+    entry.classList.add("entry-active");
+    view.setActiveImage(entry.dataset.name);
+  }
 }
 
 setActive(document.querySelector(".entry"));
 
-window.addEventListener("scroll", (event) => {
-    const topEntry = Array.from(document.querySelectorAll(".entry"))
-        .find(node => node.getBoundingClientRect().top > 0);
+window.addEventListener("scroll", event => {
+  const topEntry = Array.from(document.querySelectorAll(".entry")).find(
+    node => node.getBoundingClientRect().top > 0
+  );
 
-    if (topEntry) {
-        setActive(topEntry);
-    }
+  if (topEntry) {
+    setActive(topEntry);
+  }
 });
+
+function preloadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = resolve;
+    img.onerror = reject;
+  });
+}
+
+Array.from(document.querySelectorAll(".entry"))
+  .map(entry => imageName(entry.dataset.name))
+  .reduce((promise, src) => promise.then(() => preloadImage(src)), Promise.resolve());
