@@ -5,13 +5,17 @@ function addElement(tag, className, parent) {
   return element;
 }
 
-function imageName(name) {
-  return `/images/S_und_U-${name}.png`;
-}
+const transparent = `data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==`;
 
 class ImageView {
   constructor() {
     this.el = document.querySelector(".map");
+    this.spinner = addElement("div", "spinner spinner-hidden", this.el);
+    this.spinner.innerHTML = `
+      <div class="spinner-fig-1"></div>
+      <div class="spinner-fig-2"></div>
+      <div class="spinner-fig-3"></div>
+    `;
     this.fullMap = addElement("img", "map-full", this.el);
     this.zoomMap = addElement("img", "map-zoom", this.el);
     this.zoomMap.style.display = "none";
@@ -36,14 +40,53 @@ class ImageView {
   }
 
   setActiveImage(name) {
-    const src = imageName(name);
-    this.fullMap.src = src;
-    this.zoomMap.src = src;
+    this.fullMap.src = transparent;
+    this.zoomMap.src = transparent;
+    this.spinner.classList.remove("spinner-hidden");
+    imagesLoader.getImage(name).then(src => {
+      this.fullMap.src = src;
+      this.zoomMap.src = src;
+      this.spinner.classList.add("spinner-hidden");
+    });
+  }
+}
+
+class ImagesLoader {
+  constructor() {
+    this.loading = {};
+  }
+
+  getImage(name) {
+    if (!this.loading[name]) {
+      this.loading[name] = this.loadImage(`/images/S_und_U-${name}.png`);
+    }
+    return this.loading[name];
+  }
+
+  loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => resolve(src);
+      img.onerror = reject;
+    });
+  }
+
+  doImagesPreload(items) {
+    setTimeout(() => {
+      items.reduce((promise, src) => promise.then(() => this.getImage(src)), Promise.resolve());
+    }, 1000);
   }
 }
 
 let currentEntry;
+const imagesLoader = new ImagesLoader();
 const view = new ImageView();
+
+imagesLoader.doImagesPreload(
+  Array.from(document.querySelectorAll(".entry")).map(entry => entry.dataset.name)
+);
+
 function setActive(entry) {
   if (currentEntry !== entry) {
     if (currentEntry) {
@@ -66,16 +109,3 @@ window.addEventListener("scroll", event => {
     setActive(topEntry);
   }
 });
-
-function preloadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = src;
-    img.onload = resolve;
-    img.onerror = reject;
-  });
-}
-
-Array.from(document.querySelectorAll(".entry"))
-  .map(entry => imageName(entry.dataset.name))
-  .reduce((promise, src) => promise.then(() => preloadImage(src)), Promise.resolve());
